@@ -12,5 +12,22 @@ CHIP DMux {
     OUT a, b;
 
     PARTS:
-    //// Replace this comment with your code.
+    // truth table for a:
+    // in,sel => a
+    // 0,0 => 0
+    // 0,1 => 1
+    // 1,0 => 0
+    // 1,1 => 0
+
+    Not(in= sel, out= Notsel);
+    And(a= in, b= Notsel, out= a);
+
+    // truth table for b:
+    // in,sel => b
+    // 0,0 => 0
+    // 0,1 => 0
+    // 1,0 => 0
+    // 1,1 => 1
+
+    And(a= in, b= sel, out= b);
 }
