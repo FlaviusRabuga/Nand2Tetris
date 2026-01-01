@@ -11,5 +11,16 @@ CHIP HalfAdder {
         carry;  // Left bit of a + b
 
     PARTS:
-    //// Replace this comment with your code.
+    // truth table for the HalfAdder chip:
+    // a + b => sum, carry
+    // 0 + 0 => 0, 0
+    // 0 + 1 => 1, 0
+    // 1 + 0 => 1, 0
+    // 1 + 1 => 0, 1
+
+    // Clearly, sum has the same truth table as Xor
+    // and carry has the same truth table as And
+
+    Xor(a= a, b= b, out= sum);
+    And(a= a, b= b, out= carry);
 }
