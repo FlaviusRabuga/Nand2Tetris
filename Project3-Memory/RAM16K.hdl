@@ -13,5 +13,24 @@ CHIP RAM16K {
     OUT out[16];
 
     PARTS:
-    //// Replace this comment with your code.
+    // dmux to select the right RAM
+    DMux4Way(a= selectedRAM0, b= selectedRAM1,
+             c= selectedRAM2, d= selectedRAM3,
+             sel= address[12..13], in= true);
+
+    // compute the load flag for each RAM
+    And(a= selectedRAM0, b= load, out= aSR0);
+    And(a= selectedRAM1, b= load, out= aSR1);
+    And(a= selectedRAM2, b= load, out= aSR2);
+    And(a= selectedRAM3, b= load, out= aSR3);
+
+    RAM4K(in= in, load= aSR0, address= address[0..11], out= ramOut0);
+    RAM4K(in= in, load= aSR1, address= address[0..11], out= ramOut1);
+    RAM4K(in= in, load= aSR2, address= address[0..11], out= ramOut2);
+    RAM4K(in= in, load= aSR3, address= address[0..11], out= ramOut3);
+
+    // mux to select the output from the right RAM
+    Mux4Way16(a= ramOut0, b= ramOut1,
+              c= ramOut2, d= ramOut3,
+              sel= address[12..13], out= out);
 }

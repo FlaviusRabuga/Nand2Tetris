@@ -14,5 +14,31 @@ CHIP PC {
     OUT out[16];
     
     PARTS:
-    //// Replace this comment with your code.
+    // process the reset flag
+    Mux16(a= in, b= false, sel= reset, out= afterReset);
+
+    // process the inc flag
+    Or(a= reset, b= load, out= rOrl);
+    Not(in= rOrl, out= shouldInc);
+    Inc16(in= prevVal, out= prevValInc);
+    Mux16(a= afterReset, b= prevValInc,
+          sel= shouldInc, out= afterInc);
+
+    // update the register
+    Or(a= rOrl, b= inc, out= shouldUpdate);
+    Register(in= afterInc, load= shouldUpdate,
+             out= prevVal, out= out);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

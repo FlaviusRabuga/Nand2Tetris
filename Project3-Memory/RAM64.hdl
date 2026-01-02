@@ -13,5 +13,40 @@ CHIP RAM64 {
     OUT out[16];
 
     PARTS:
-    //// Replace this comment with your code.
+    // more or less, the same algorithm from 
+    // the register applies here as well
+
+    // dmux to select the right RAM
+    DMux8Way(a= selectedRAM0, b= selectedRAM1,
+             c= selectedRAM2, d= selectedRAM3,
+             e= selectedRAM4, f= selectedRAM5,
+             g= selectedRAM6, h= selectedRAM7,
+             sel= address[3..5], in= true);
+
+    // compute the load flag for each RAM
+    And(a= selectedRAM0, b= load, out= aSR0);
+    And(a= selectedRAM1, b= load, out= aSR1);
+    And(a= selectedRAM2, b= load, out= aSR2);
+    And(a= selectedRAM3, b= load, out= aSR3);
+    And(a= selectedRAM4, b= load, out= aSR4);
+    And(a= selectedRAM5, b= load, out= aSR5);
+    And(a= selectedRAM6, b= load, out= aSR6);
+    And(a= selectedRAM7, b= load, out= aSR7);
+
+    RAM8(in= in, load= aSR0, address= address[0..2], out= ramOut0);
+    RAM8(in= in, load= aSR1, address= address[0..2], out= ramOut1);
+    RAM8(in= in, load= aSR2, address= address[0..2], out= ramOut2);
+    RAM8(in= in, load= aSR3, address= address[0..2], out= ramOut3);
+    RAM8(in= in, load= aSR4, address= address[0..2], out= ramOut4);
+    RAM8(in= in, load= aSR5, address= address[0..2], out= ramOut5);
+    RAM8(in= in, load= aSR6, address= address[0..2], out= ramOut6);
+    RAM8(in= in, load= aSR7, address= address[0..2], out= ramOut7);
+
+
+    // mux to select the output from the right RAM
+    Mux8Way16(a= ramOut0, b= ramOut1,
+              c= ramOut2, d= ramOut3,
+              e= ramOut4, f= ramOut5,
+              g= ramOut6, h= ramOut7,
+              sel= address[3..5], out= out);
 }

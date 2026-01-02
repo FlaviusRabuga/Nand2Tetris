@@ -13,5 +13,54 @@ CHIP RAM8 {
     OUT out[16];
 
     PARTS:
-    //// Replace this comment with your code.
+    // dmux to select the right register
+    DMux8Way(a= selectedReg0, b= selectedReg1,
+             c= selectedReg2, d= selectedReg3,
+             e= selectedReg4, f= selectedReg5,
+             g= selectedReg6, h= selectedReg7,
+             sel= address, in= true);
+
+    // And the results with the load input
+    // the result will be 1 for the selected register
+    // if and only if load = 1
+    And(a= selectedReg0, b= load, out= andSl0);
+    And(a= selectedReg1, b= load, out= andSl1);
+    And(a= selectedReg2, b= load, out= andSl2);
+    And(a= selectedReg3, b= load, out= andSl3);
+    And(a= selectedReg4, b= load, out= andSl4);
+    And(a= selectedReg5, b= load, out= andSl5);
+    And(a= selectedReg6, b= load, out= andSl6);
+    And(a= selectedReg7, b= load, out= andSl7);
+
+    Register(in= in, load= andSl0, out= regOut0);
+    Register(in= in, load= andSl1, out= regOut1);
+    Register(in= in, load= andSl2, out= regOut2);
+    Register(in= in, load= andSl3, out= regOut3);
+    Register(in= in, load= andSl4, out= regOut4);
+    Register(in= in, load= andSl5, out= regOut5);
+    Register(in= in, load= andSl6, out= regOut6);
+    Register(in= in, load= andSl7, out= regOut7);
+
+    // mux to select the output from the right register
+    Mux8Way16(a= regOut0, b= regOut1,
+              c= regOut2, d= regOut3,
+              e= regOut4, f= regOut5,
+              g= regOut6, h= regOut7,
+              sel= address, out= out);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
