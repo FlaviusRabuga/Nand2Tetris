@@ -1,0 +1,129 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/5/CPU.hdl
+/**
+ * The Hack Central Processing unit (CPU).
+ * Parses the binary code in the instruction input and executes it according to the
+ * Hack machine language specification. In the case of a C-instruction, computes the
+ * function specified by the instruction. If the instruction specifies to read a memory
+ * value, the inM input is expected to contain this value. If the instruction specifies
+ * to write a value to the memory, sets the outM output to this value, sets the addressM
+ * output to the target address, and asserts the writeM output (when writeM = 0, any
+ * value may appear in outM).
+ * If the reset input is 0, computes the address of the next instruction and sets the
+ * pc output to that value. If the reset input is 1, sets pc to 0.
+ * Note: The outM and writeM outputs are combinational: they are affected by the
+ * instruction's execution during the current cycle. The addressM and pc outputs are
+ * clocked: although they are affected by the instruction's execution, they commit to
+ * their new values only in the next cycle.
+ */
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to re-start the current
+                         // program (reset==1) or continue executing
+                         // the current program (reset==0).
+
+    OUT outM[16],        // M value output
+        writeM,          // Write to M? 
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // address of next instruction
+
+    PARTS:
+
+    /*
+    instructions dictionary:
+        A-type instruction
+            0 address
+        C-type instruction:
+            1 1 1   a c1 c2 c3 c4 c5 c6    d1 d2 d3   j1 j2 j3
+    */
+
+    /*
+    register A
+        A-type instruction: store in A if instruction[15] == 0
+        C-type instruction: store in A if instruction[15] == 1 and d1 == 1
+
+        bit15,bit5 => loadRegA
+        0,0 => 1
+        0,1 => 1
+        1,0 => 0
+        1,1 => 1
+    */
+    Nand(a= instruction[15], b= instruction[5], out= nand15and5);
+    Nand(a= instruction[15], b= nand15and5, out= loadRegA);
+    Mux16(a= instruction, b= outALU, sel= instruction[15], out= toRegA);
+
+    ARegister(in= toRegA, load= loadRegA, out= outRegA, out[0..14]= addressM);
+
+    /*
+    register D
+        A-type instruction: nothing happens if instruction[15] == 0
+        C-type instruction: store in D if instruction[15] == 1 and d2 == 1
+    */
+    And(a= instruction[15], b= instruction[4], out= loadRegD);
+    DRegister(in= outALU, load= loadRegD, out= outRegD);
+
+    /*
+    ALU
+        Has 2 operands:
+            - the first one is always register D
+            - the second one is register A if a == 0
+                                register M if a == 1
+        
+        c1 = zero x (regD)
+        c2 = negate x (regD)
+        c3 = zero y (regA or regM)
+        c4 = negate x (regA or regM)
+        c5 = compute (out = x + y) or (out = x & y)
+        c6 = negate the out output  
+    */
+
+    Mux16(a= outRegA, b= inM, sel= instruction[12], out= toALU);
+    ALU(x= outRegD, y= toALU,
+        zx= instruction[11], nx= instruction[10],
+        zy= instruction[9], ny= instruction[8],
+        f= instruction[7], no= instruction[6],
+        out= outALU, out= outM,
+        zr= zr, ng= ng);
+
+    /*
+    writeM
+        In the next cycle, the value of outM will be written at addressM
+
+        A-type instruction: nothing happens if instruction[15] == 0
+        C-type instruction: writeM = 1 if instruction[15] == 1 and d3 == 1
+    */
+    And(a= instruction[15], b= instruction[3], out= writeM);
+
+    /*
+    Program Counter
+        - reset: directly hooked to the reset wire
+        - load: only load if a jump is needed:
+            - j1 is 1 if the compare value can be less than 0
+            - j2 is 1 if the compare value can be exactly 0
+            - j3 is 1 if the compare value can be greater than 0
+        - inc: always increment if no jump occurs
+    */
+
+    Or(a= ng, b= zr, out= ngORzr);
+    Not(in= ngORzr, out= pv);
+
+    Not(in= instruction[2], out= notJ1);
+    Not(in= instruction[1], out= notJ2);
+    Not(in= instruction[0], out= notJ3);
+
+    And(a= notJ1, b= ng, out= breaksRuleJ1);
+    And(a= notJ2, b= zr, out= breaksRuleJ2);
+    And(a= notJ3, b= pv, out= breaksRuleJ3);
+
+    Or(a= breaksRuleJ1, b= breaksRuleJ2, out= breaksRuleJ1OrJ2);
+    Or(a= breaksRuleJ1OrJ2, b= breaksRuleJ3, out= breaksAnyJRule);
+    Not(in= breaksAnyJRule, out= doesntBreakAnyJRule);
+
+    And(a= instruction[15], b= doesntBreakAnyJRule, out= loadPC);
+
+    PC(in= outRegA, load= loadPC, inc= true, reset= reset, out[0..14]= pc);
+}
