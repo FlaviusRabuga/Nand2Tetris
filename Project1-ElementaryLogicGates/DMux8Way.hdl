@@ -18,16 +18,23 @@ CHIP DMux8Way {
     OUT a, b, c, d, e, f, g, h;
 
     PARTS:
-    Mux8Way16(a[15]= in, a[0..14]= false,  
-              b[14]= in, b[0..13]= false, b[15]= false,
-              c[13]= in, c[0..12]= false, c[14..15]= false,
-              d[12]= in, d[0..11]= false, d[13..15]= false,
-              e[11]= in, e[0..10]= false, e[12..15]= false,
-              f[10]= in, f[0..9]= false, f[11..15]= false,
-              g[9]= in, g[0..8]= false, g[10..15]= false,
-              h[8]= in, h[0..7]= false, h[9..15]= false, 
-              sel= sel,
-              out[15]= a, out[14]= b, out[13]= c, out[12]= d,
-              out[11]= e, out[10]= f, out[9]= g, out[8]= h,
-              );
+    // Mux8Way16(a[15]= in, a[0..14]= false,  
+    //           b[14]= in, b[0..13]= false, b[15]= false,
+    //           c[13]= in, c[0..12]= false, c[14..15]= false,
+    //           d[12]= in, d[0..11]= false, d[13..15]= false,
+    //           e[11]= in, e[0..10]= false, e[12..15]= false,
+    //           f[10]= in, f[0..9]= false, f[11..15]= false,
+    //           g[9]= in, g[0..8]= false, g[10..15]= false,
+    //           h[8]= in, h[0..7]= false, h[9..15]= false, 
+    //           sel= sel,
+    //           out[15]= a, out[14]= b, out[13]= c, out[12]= d,
+    //           out[11]= e, out[10]= f, out[9]= g, out[8]= h,
+    //           );
+    DMux4Way(in= in, sel= sel[0..1], a= aHalf, b= bHalf, c= cHalf, d= dHalf);
+    Mux16(b[15]= aHalf, b[14]= bHalf, b[13]= cHalf, b[12]= dHalf, b[0..11] = false,
+          a[12..15]= false, a[11]= aHalf, a[10]= bHalf, a[9]= cHalf, a[8]= dHalf, a[0..7]= false,
+          sel= sel[2],
+          out[15]= e, out[14]= f, out[13]= g, out[12]= h,
+          out[11]= a, out[10]= b, out[9]= c, out[8]= d
+        );
 }
